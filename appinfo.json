@@ -1,0 +1,33 @@
+{
+    "appKeys": {
+        "TIME_OFFSET_KEY": 1
+    },
+    "capabilities": [
+        ""
+    ],
+    "companyName": "max@sandholm.org",
+    "longName": "IntlWatch",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/timecursor.png",
+                "name": "IMAGE_CURSOR",
+                "type": "png"
+            },
+            {
+                "file": "images/black and white map_0.png",
+                "name": "IMAGE_WORLD_BACKGROUND",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "2",
+    "shortName": "IntlWatch",
+    "uuid": "5d64ccb5-423d-4590-bbf6-c2f891d6043f",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
