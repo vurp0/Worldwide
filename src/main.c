@@ -10,32 +10,34 @@ static GBitmap *s_cursor_bitmap;
 static BitmapLayer *s_cursor_layer;
 
 static int cursor_x_position = 0;
-static int time_offset = DEFAULT_TIME_OFFSET;
+
+/* Warning: the watchface doesn't work properly in the CloudPebble emulator.
+   This is because the emulated Pebble uses the computer's local time, but
+   the JS part of the app doesn't report the correct timezone in the CloudPebble emulator. */
+static int time_offset = DEFAULT_TIME_OFFSET; // The offset from UTC in minutes. Comes directly from JS: Date.prototype.getTimezoneOffset()
 
 static void check_time() {
-  time_t current_time = time(NULL) + (time_offset*60) + 43200;
-  current_time = current_time % 86400;
-  cursor_x_position = 142-((current_time/608+2)%142);
+  // The following three lines are maybe the worst I've ever written.
+  time_t current_time = time(NULL) + (time_offset*60) + 43200; // basically, take the current UTC time and shift it by 12 hours
+  current_time = current_time % 86400; // mod length of a day
+  cursor_x_position = 142-((current_time/608+2)%142); // current time of day in seconds divided by 608 gives a value between 0 and approx. 168.
+                                                      // The +2 is there because my world map is about two pixels off
   layer_set_frame(bitmap_layer_get_layer(s_cursor_layer), GRect(cursor_x_position, 0, 3, 168));
   layer_mark_dirty(bitmap_layer_get_layer(s_cursor_layer));
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
+  //completely typical inbox received callback
   Tuple *t = dict_read_first(iterator);
 
-  // Process all pairs present
   while (t != NULL) {
-    // Process this pair's key
     switch (t->key) {
       case TIME_OFFSET_KEY:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Received time zone offset: %d", (int)(t->value->int32));
+        //APP_LOG(APP_LOG_LEVEL_INFO, "Received time zone offset: %d", (int)(t->value->int32)); // debug message
         time_offset = (int)(t->value->int32);
         check_time();
         break;
     }
-
-    // Get next pair, if any
     t = dict_read_next(iterator);
   }
 }
@@ -93,6 +95,7 @@ static void init() {
   
   tick_timer_service_subscribe(MINUTE_UNIT, (TickHandler)tick_handler);
   
+  // see if the timezone has been cached
   if (persist_exists(TIME_OFFSET_KEY)) {
     time_offset = persist_read_int(TIME_OFFSET_KEY);
   }
@@ -101,6 +104,8 @@ static void init() {
 }
 
 static void deinit() {
+  // write the timezone to persistent storage as a cache
+  // time_offset could have been modified through an AppMessage while the app was running
   persist_write_int(TIME_OFFSET_KEY, time_offset);
 }
 
